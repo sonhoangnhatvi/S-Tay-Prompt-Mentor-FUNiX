@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUNiX Mentor Prompt Toolkit - by Hoang Nhat Son</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        pre,
+        code {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .prompt-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Responsive Sidebar Text */
+        .sidebar-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            /* Tối đa 2 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+            /* Cho phép xuống dòng */
+            line-height: 1.4;
+        }
+
+        /* Toast Animation */
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .toast-enter {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white px-6 py-4 flex justify-between items-center shadow-md z-10 relative">
+        <div class="flex items-center gap-3">
+            <div class="bg-orange-500 p-2 rounded-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Mentor Prompt Toolkit</h1>
+                <p class="text-xs text-blue-200">Tài liệu nội bộ dành cho Mentor FUNiX</p>
+            </div>
+        </div>
+        <div class="text-right hidden sm:block">
+            <p class="text-sm font-medium">Biên soạn bởi</p>
+            <p class="text-lg font-bold text-orange-400">Hoàng Nhật Sơn</p>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-72 sm:w-80 bg-white border-r border-slate-200 flex flex-col h-full shadow-sm z-0 relative">
+            <div class="p-4 border-b border-slate-100 bg-slate-50">
+                <h2 class="text-xs uppercase font-bold text-slate-400 tracking-wider">Danh mục Prompts</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-1" id="sidebar-menu">
+                <!-- Danh sách tab sẽ được render bằng JS -->
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 text-center">
+                Phiên bản 1.0 (2026) <br>
+                Tối ưu cho ChatGPT & Claude
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-8 relative">
+
+            <div id="welcome-screen"
+                class="h-full flex flex-col items-center justify-center text-center text-slate-400 hidden">
+                <svg class="w-24 h-24 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                    </path>
+                </svg>
+                <h2 class="text-2xl font-bold text-slate-600 mb-2">Chọn một Prompt bên trái để bắt đầu</h2>
+                <p>Bộ công cụ giúp tối ưu hiệu suất chấm bài, soạn giáo án và giao tiếp phụ huynh.</p>
+            </div>
+
+            <div id="content-screen" class="max-w-4xl mx-auto space-y-6 hidden">
+
+                <!-- Header của Prompt -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex flex-wrap gap-2 mb-3" id="prompt-tags">
+                        <!-- Tags rendered here -->
+                    </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-2" id="prompt-title">Tiêu đề</h2>
+                    <p class="text-slate-600 text-sm" id="prompt-desc">Mô tả chi tiết ứng dụng của prompt.</p>
+                </div>
+
+                <!-- Vùng chứa các block Prompt (Có thể có 1 hoặc nhiều block trong 1 mục) -->
+                <div id="prompt-blocks-container" class="space-y-6">
+                    <!-- Các khối code sẽ được render vào đây -->
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 hidden z-50">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span class="font-medium text-sm">Đã sao chép vào Clipboard!</span>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col transform scale-95 transition-transform duration-300"
+            id="preview-modal-content">
+            <div
+                class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                        </path>
+                    </svg>
+                    Kết quả mô phỏng (Preview)
+                </h3>
+                <button onclick="closePreview()"
+                    class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-800 rounded-b-2xl">
+                <div class="flex items-center gap-2 mb-4 text-slate-400 text-sm border-b border-slate-700 pb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Đây là ví dụ minh họa kết quả khi AI trả lời Prompt này:
+                </div>
+                <pre><code id="preview-text" class="text-green-300 text-sm font-mono whitespace-pre-wrap word-wrap break-word"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cơ sở dữ liệu Prompts
+        const promptsData = [
+            {
+                id: 'codecombat',
+                icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>',
+                title: 'Tạo Khung Hướng Dẫn (Skeleton Code)',
+                desc: 'Chuyển đổi mã giải pháp và mã mặc định của CodeCombat thành cấu trúc TODO line-by-line chuẩn sư phạm giúp học viên tự duy logic thay vì chép code.',
+                tags: ['CodeCombat', 'Python', 'TODO'],
+                blocks: [
+                    {
+                        title: 'Prompt Dàn Ý TODO',
+                        content: `Bạn là một Gia sư Codecombat chuyên nghiệp, hỗ trợ giáo viên soạn bài giảng. Nhiệm vụ của bạn là biến đổi "Default code" (mã mặc định của game) và "Solution code" (mã giải pháp) thành một khung hướng dẫn (Skeleton Code) chuẩn Python cho học viên.
+
+Hãy tuân thủ nghiêm ngặt các quy tắc định dạng sau để học viên không bị ngợp:
+1. Phong cách "Line-by-line TODO": Không gom gợi ý thành một cục lớn ở cuối hàm hay cuối bài. Gợi ý phải nằm NGAY TRƯỚC dòng code cần viết.
+2. Với những dòng code có trong Solution code nhưng KHÔNG có trong Default code, hãy chuyển thành:
+   - Dòng comment giải thích logic ngắn gọn.
+   - Dòng \`# TODO: [Hành động cụ thể] tại đây:\` ngay phía dưới để chừa chỗ cho học viên viết code.
+3. Đảm bảo giữ nguyên thụt lề (Indentation) chuẩn của Python cho các dòng \`# TODO\`. Nếu đoạn code đó nằm trong lệnh \`if\` hoặc vòng lặp \`for\`, các dòng \`# TODO\` cũng phải được thụt lề chính xác để học viên nhìn vào là biết vị trí cần gõ.
+4. Giữ nguyên các phần code đã được viết sẵn trong Default code.
+
+Dưới đây là mã nguồn của bài tập:
+
+- Default code:
+[DÁN MÃ MẶC ĐỊNH VÀO ĐÂY]
+
+- Solution code:
+[DÁN MÃ GIẢI PHÁP VÀO ĐÂY]`
+                    }
+                ]
+            },
+            {
+                id: 'extract',
+                icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>',
+                title: 'Trích Xuất Dữ Liệu Từ Ảnh',
+                desc: 'Dùng chung với tính năng Vision của AI để bóc tách thông tin từ ảnh chụp màn hình, note ghi chú nhanh chóng.',
+                tags: ['Data Extraction', 'Vision AI', 'Tiết kiệm thời gian'],
+                blocks: [
+                    {
+                        title: 'Prompt Xử Lý Ảnh',
+                        content: `Hãy đọc hình ảnh này và thực hiện các yêu cầu sau:
+1. Trích xuất toàn bộ nội dung văn bản nằm phía sau dấu hai chấm (:) ở mỗi dòng.
+2. Bỏ qua phần mốc thời gian trong ngoặc đơn ở phía trước.
+3. Ghép tất cả các nội dung đã trích xuất được thành một chuỗi duy nhất, các phần tử cách nhau bằng dấu phẩy (,).
+4. Không cần giải thích thêm, chỉ trả về chuỗi kết quả cuối cùng.`
+                    }
+                ]
+            },
+            {
+                id: 'scratch_feedback',
+                icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                title: 'Nhận Xét Buổi Học Trải Nghiệm (Scratch)',
+                desc: 'Bộ 3 prompt chuyên dụng để sinh ra các mẫu nhận xét chuyên nghiệp, tạo ấn tượng tốt và thuyết phục phụ huynh đăng ký khóa học.',
+                tags: ['Scratch', 'Feedback', 'Tư vấn phụ huynh'],
+                blocks: [
+                    {
+                        title: 'Cách 1: Điền thông tin nhanh (Mẫu chuẩn)',
+                        content: `Hãy đóng vai là một giáo viên dạy Lập trình Scratch vui vẻ, chuyên nghiệp và tâm lý. Hãy viết một "PHIẾU TỔNG KẾT BUỔI HỌC TRẢI NGHIỆM SCRATCH" để gửi cho phụ huynh dựa trên các thông tin dưới đây:
+
+1. Thông tin cơ bản:
+- Tên phụ huynh: [Ví dụ: Anh Sang & Chị Dung]
+- Tên học sinh: [Ví dụ: Em Hà Gia Hân]
+- Lớp: [Ví dụ: Lớp 2]
+- Người hỗ trợ thủ tục: [Ví dụ: @Gia Sư Funix]
+
+2. Nội dung bài học & Sản phẩm:
+- Tên dự án con đã làm: [Ví dụ: Dự án "Chú mèo thông minh biết hỏi đáp"]
+- Các khối lệnh con đã dùng: [Ví dụ: Khi bấm vào lá cờ xanh, Hỏi và đợi, Trả lời, Nói]
+
+3. Biểu hiện của học sinh trong buổi học:
+- Thái độ: [Ví dụ: Vui vẻ, hòa đồng, năng nổ tương tác với thầy giáo]
+- Tiếp thu & Tư duy: [Ví dụ: Tiếp thu kiến thức mới rất nhanh, hiểu rõ logic lưu trữ của khối lệnh Trả lời]
+- Kỹ năng máy tính: [Ví dụ: Thao tác chuột nhanh nhẹn, kéo thả khối lệnh chính xác]
+
+4. Khóa học khuyến nghị tiếp theo: [Ví dụ: Khóa Lập trình Scratch 1]
+
+Yêu cầu về văn phong: 
+- Lời văn lịch sự, truyền cảm hứng, khen ngợi đúng mực và tạo sự tin tưởng cho phụ huynh.
+- Bố cục rõ ràng, sử dụng các icon (emoji) phù hợp để bài viết sinh động, dễ đọc (không bị dày đặc chữ).
+- Cuối bài có lời nhắn gửi phụ huynh phản hồi để nhân viên hỗ trợ thủ tục nhập học.`
+                    },
+                    {
+                        title: 'Cách 2: Yêu cầu AI "Phỏng vấn ngược"',
+                        content: `Tôi là giáo viên/tư vấn viên khóa học Lập trình Scratch cho trẻ em. Tôi muốn viết một bản nhận xét buổi học trải nghiệm để gửi cho phụ huynh nhưng chưa biết bắt đầu từ đâu. 
+
+Hãy đóng vai một chuyên viên content, đặt cho tôi 5 câu hỏi ngắn gọn, lần lượt từng câu một (hoặc gạch đầu dòng) để thu thập thông tin về học sinh. 
+
+Sau khi tôi trả lời, hãy giúp tôi viết một bản tổng kết buổi học thật chuyên nghiệp, hay và thuyết phục phụ huynh đăng ký khóa học chính thức nhé.`
+                    },
+                    {
+                        title: 'Cách 3: Tải ảnh sản phẩm để AI tự đánh giá',
+                        content: `Tôi gửi kèm ảnh chụp màn hình dự án Scratch mà học sinh vừa hoàn thành trong buổi học trải nghiệm. 
+
+Hãy nhìn vào hình ảnh (phần khối lệnh và sân khấu) để phân tích xem học sinh đã học và làm được những gì. Sau đó viết một bản nhận xét gửi cho phụ huynh: [Tên phụ huynh], học sinh: [Tên học sinh - Lớp]. 
+
+Hãy bổ sung thêm nhận xét về thái độ: [Điền thái độ của con vào đây, ví dụ: rất tập trung và thông minh] để hoàn thiện bài viết. 
+
+Bố cục chia làm 3 phần: 
+1. Nội dung đã học
+2. Nhận xét của giáo viên
+3. Định hướng tiếp theo`
+                    }
+                ]
+            },
+            {
+                id: 'code_review',
+                icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                title: 'Phân Tích & Chữa Bài Tập Code',
+                desc: 'Prompt giúp đóng vai Giáo viên để chấm bài, chỉ ra lỗi sai logic/cú pháp và đưa ra lời khuyên cốt lõi.',
+                tags: ['Python', 'Code Review', 'Sư phạm'],
+                blocks: [
+                    {
+                        title: 'Prompt Chấm & Chữa Lỗi',
+                        content: `Bạn là một trợ giảng lập trình Python thông minh, tận tâm và có kỹ năng sư phạm tuyệt vời. Tôi là giáo viên và tôi cần bạn phân tích bài làm của học viên để tôi gửi phản hồi cho con.
+
+Hãy đóng vai là TÔI (Xưng "Thầy" và gọi học viên là "[Tên học viên]") để viết một bài phân tích lỗi sai và hướng dẫn sửa bài thật dễ hiểu, khích lệ và trực quan.
+
+Dưới đây là thông tin bài tập:
+- Tên học viên: [Nhập tên học viên vào đây, ví dụ: Khôi]
+- Ngôn ngữ: Python (Trò chơi CodeCombat)
+- Code của học viên:
+[Dán code của học viên vào đây]
+
+- Code đáp án mẫu (Solution):
+[Dán code đáp án vào đây]
+
+Hãy xuất ra phản hồi theo cấu trúc chính xác sau:
+1. PHÂN TÍCH CÁC LỖI TRONG CODE CỦA [Tên học viên]: Chỉ rõ từng lỗi (lỗi cú pháp, lỗi logic, lỗi thiếu lệnh), giải thích lý do tại sao sai và hướng khắc phục ngắn gọn.
+2. CODE HOÀN CHỈNH: Đoạn code đã sửa hoàn chỉnh, có gắn các comment (dấu #) giải thích ngay tại các dòng bị lỗi để học viên dễ đối chiếu.
+3. BÀI HỌC CẦN NHỚ CHO CÁC BÀI SAU: Đúc kết 2-3 quy tắc cốt lõi về mặt kiến thức lập trình từ bài tập này để học viên không lặp lại lỗi cũ.
+
+Lưu ý: Giữ giọng điệu thân thiện, dễ hiểu cho trẻ em/học sinh, sử dụng định dạng Markdown (bullet point, bảng, chữ in đậm) để bài viết scannable (dễ đọc lướt mà vẫn nắm được ý chính).`
+                    }
+                ]
+            },
+            {
+                id: 'scratch_gen',
+                icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>',
+                title: 'Tạo Gợi Ý Scratch Từ Đề Bài',
+                desc: 'Yêu cầu AI sinh ra giao diện mô phỏng các khối lệnh Scratch (Mô hình khối) dựa trên đề bài toán thuật toán.',
+                tags: ['Scratch', 'React', 'Thuật toán'],
+                blocks: [
+                    {
+                        title: 'Prompt Gen UI Khối Lệnh',
+                        content: `Chào bạn, tôi là Hoàng Nhật Sơn, Giảng viên Lập trình tại Funix. Tôi cần bạn tạo một giao diện Web mô phỏng các khối lệnh Scratch (Mô hình khối) cho bài toán sau:
+
+[DÁN MÔ TẢ THUẬT TOÁN / ĐỀ BÀI HOẶC ẢNH VÀO ĐÂY]
+
+Nhiệm vụ của bạn là sử dụng tính năng Artifacts để tạo ĐÚNG MỘT FILE React (.jsx) mô phỏng chính xác thuật toán trên bằng các khối lệnh Scratch. Yêu cầu kỹ thuật NGHIÊM NGẶT như sau:
+
+1. LUẬT CHỐNG CRASH VÀ LỖI HIỂN THỊ (QUAN TRỌNG NHẤT):
+- TUYỆT ĐỐI KHÔNG import bất kỳ thư viện icon nào (như lucide-react). Phải sử dụng inline SVG cho mọi icon.
+- PHẢI khai báo ĐẦY ĐỦ các UI Primitives trước khi sử dụng: \`InputWhite\`, \`VarPill\`, \`OpPill\`, \`ListPill\`, \`ArgPill\`, \`BoolOp\`, \`SensingVal\`. (Tuyệt đối không để sót gây lỗi ReferenceError).
+
+2. CẤU TRÚC KHỐI LỆNH (BLOCK WRAPPERS):
+- Khai báo các khối cơ bản với màu chuẩn Scratch: EventBlock (Vàng), ControlBlock (Cam), VarBlock (Cam đậm), SensingBlock (Xanh dương), LooksBlock (Tím), FuncDefBlock/FuncCallBlock (Hồng), ListBlock (Cam đỏ), PenBlock (Xanh ngọc).
+- Các khối chữ C (C-Blocks) như \`IfElseBlock\`, \`RepeatBlock\`, \`RepeatUntilBlock\`, \`CBlock\` phải được thiết kế lồng nhau chính xác với viền trái thụt lề (border-l).
+
+3. CHỐNG VỠ LAYOUT (ANTI-BREAKING):
+- Mọi khối lệnh và cụm khối lệnh phải được bọc trong thẻ có class \`w-max\` và \`whitespace-nowrap\` để tuyệt đối không bị rớt dòng khi văn bản dài.
+- Container bọc ngoài các cột phải có \`overflow-x-auto\` và \`custom-scrollbar\` để người dùng có thể cuộn ngang nếu khối lệnh quá dài.
+
+4. BỐ CỤC UI (3 CỘT):
+- Cột 1: Khởi tạo, Nhập dữ liệu và Chương trình chính.
+- Cột 2: Các vòng lặp hoặc thuật toán lõi.
+- Cột 3: Hàm tự định nghĩa (My Blocks) hoặc chú thích Toán học.
+- Trên cùng có Header thiết kế đẹp mắt (có icon SVG, tiêu đề bài toán, và các badge chứa từ khóa thuật toán).`
+                    }
+                ]
+            }
+        ];
+
+        let activePromptId = null;
+
+        // Khởi tạo Sidebar
+        const menuContainer = document.getElementById('sidebar-menu');
+
+        function renderSidebar() {
+            menuContainer.innerHTML = '';
+            promptsData.forEach(item => {
+                const btn = document.createElement('button');
+                const isActive = activePromptId === item.id;
+
+                // Cập nhật class để căn chỉnh lại các mục
+                btn.className = `w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-start gap-3 ${isActive ? 'bg-blue-50 text-blue-700 font-medium shadow-sm border border-blue-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'}`;
+
+                btn.innerHTML = `
+                    <div class="mt-0.5 ${isActive ? 'text-blue-600' : 'text-slate-400'} flex-shrink-0">${item.icon}</div>
+                    <div class="flex-1 text-sm sidebar-text">
+                        ${item.title}
+                    </div>
+                `;
+
+                btn.onclick = () => selectPrompt(item.id);
+                menuContainer.appendChild(btn);
+            });
+        }
+
+        function selectPrompt(id) {
+            activePromptId = id;
+            renderSidebar();
+
+            const prompt = promptsData.find(p => p.id === id);
+
+            // Ẩn màn hình welcome, hiện content
+            document.getElementById('welcome-screen').classList.add('hidden');
+            const contentScreen = document.getElementById('content-screen');
+            contentScreen.classList.remove('hidden');
+
+            // Xóa animation cũ để trigger lại
+            contentScreen.classList.remove('animate-[fadeIn_0.3s_ease-out]');
+            void contentScreen.offsetWidth; // trigger reflow
+            contentScreen.classList.add('animate-[fadeIn_0.3s_ease-out]');
+
+            // Render Header
+            document.getElementById('prompt-title').textContent = prompt.title;
+            document.getElementById('prompt-desc').textContent = prompt.desc;
+
+            // Render Tags
+            const tagsContainer = document.getElementById('prompt-tags');
+            tagsContainer.innerHTML = prompt.tags.map(tag =>
+                `<span class="px-2.5 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-md border border-orange-200">${tag}</span>`
+            ).join('');
+
+            // Render Blocks
+            const blocksContainer = document.getElementById('prompt-blocks-container');
+            blocksContainer.innerHTML = prompt.blocks.map((block, index) => `
+                <div class="bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700">
+                    <div class="bg-slate-900 px-4 py-3 flex flex-wrap gap-2 justify-between items-center border-b border-slate-700">
+                        <span class="text-slate-300 font-mono text-sm flex items-center gap-2">
+                            <span class="text-blue-400 font-bold">#${index + 1}</span> ${block.title}
+                        </span>
+                        <div class="flex gap-2">
+                            <button onclick="openPreview(\`${block.title}\`)" 
+                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded transition-colors border border-slate-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                Xem trước
+                            </button>
+                            <button onclick="copyToClipboard(this, \`${escapeHtml(block.content)}\`)" 
+                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Copy Prompt
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4 sm:p-5 overflow-x-auto">
+                        <pre><code class="text-green-300 text-sm prompt-content">${escapeHtml(block.content)}</code></pre>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function copyToClipboard(btnElement, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Đổi UI của nút
+                const originalHtml = btnElement.innerHTML;
+                btnElement.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Đã Copy`;
+                btnElement.classList.replace('bg-blue-600', 'bg-green-600');
+                btnElement.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+
+                // Hiển thị Toast
+                const toast = document.getElementById('toast');
+                toast.classList.remove('hidden');
+                toast.classList.add('toast-enter');
+
+                setTimeout(() => {
+                    btnElement.innerHTML = originalHtml;
+                    btnElement.classList.replace('bg-green-600', 'bg-blue-600');
+                    btnElement.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
+
+                    toast.classList.add('hidden');
+                    toast.classList.remove('toast-enter');
+                }, 2000);
+            }).catch(err => {
+                alert('Lỗi copy, trình duyệt của bạn không hỗ trợ tính năng này!');
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        // --- Các hàm xử lý Preview Modal ---
+        function openPreview(blockTitle) {
+            const modal = document.getElementById('preview-modal');
+            const content = document.getElementById('preview-modal-content');
+            const textEl = document.getElementById('preview-text');
+
+            // Dữ liệu mock (mô phỏng) câu trả lời của AI dựa theo tiêu đề Prompt
+            let previewContent = "Đang tải bản xem trước...";
+
+            if (blockTitle.includes('TODO')) {
+                previewContent = "# TODO: Di chuyển anh hùng sang phải\nhero.moveRight()\n\n# Khai báo biến đếm số lượng\n# TODO: Tạo biến count và gán bằng 0\ncount = 0\n\n# TODO: Tấn công kẻ địch \"Treg\"\nhero.attack(\"Treg\")";
+            } else if (blockTitle.includes('Xử Lý Ảnh')) {
+                previewContent = "Anh Sang & Chị Dung, Hà Gia Hân, Lớp 2, @Gia Sư Funix, Chú mèo thông minh biết hỏi đáp, Khi bấm vào lá cờ xanh, Hỏi và đợi, Trả lời, Nói, Vui vẻ hòa đồng, Khóa Lập trình Scratch 1";
+            } else if (blockTitle.includes('Cách 1')) {
+                previewContent = "🎉 PHIẾU TỔNG KẾT BUỔI HỌC TRẢI NGHIỆM SCRATCH 🎉\n\nKính gửi: Anh Sang & Chị Dung\nHọc sinh: Em Hà Gia Hân - Lớp 2\n\n1️⃣ Nội dung bài học & Sản phẩm:\nHôm nay con đã hoàn thành xuất sắc dự án \"Chú mèo thông minh biết hỏi đáp\". Trong dự án này, con đã làm quen và áp dụng rất tốt các khối lệnh: Khi bấm vào lá cờ xanh, Hỏi và đợi, Trả lời, Nói.\n\n2️⃣ Đánh giá biểu hiện của con:\n- Thái độ: Con rất vui vẻ, hòa đồng và năng nổ tương tác với thầy giáo.\n- Tiếp thu & Tư duy: Con tiếp thu kiến thức mới rất nhanh, đặc biệt là hiểu logic lệnh 'Trả lời'.\n\n👉 Khóa học khuyến nghị: \"Khóa Lập trình Scratch 1\" \n\nQuý phụ huynh vui lòng phản hồi lại tin nhắn này để @Gia Sư Funix hỗ trợ thủ tục nhập học nhé ạ! ❤️";
+            } else if (blockTitle.includes('Cách 2')) {
+                previewContent = "AI: Chào bạn! Để mình giúp bạn viết một bản nhận xét thật chuyên nghiệp nhé. Bạn hãy trả lời nhanh giúp mình 5 câu hỏi sau:\n\n1. Tên của học sinh và độ tuổi/lớp là gì?\n2. Chủ đề dự án Scratch hôm nay con làm là gì?\n3. Con đã học được những khối lệnh cốt lõi nào?\n4. Điểm sáng nhất về thái độ học tập và tư duy của con là gì?\n5. Bạn muốn đề xuất con học tiếp khóa nào?\n\n(Chỉ cần gạch đầu dòng ngắn gọn, mình sẽ viết thành bài hoàn chỉnh!)";
+            } else if (blockTitle.includes('Cách 3')) {
+                previewContent = "Dựa vào hình ảnh dự án Scratch, mình xin gửi bạn mẫu nhận xét:\n\n---\nKính gửi Phụ huynh, học sinh: Hà Gia Hân - Lớp 2\n\n1. Nội dung đã học:\nQua hình ảnh khối lệnh, có thể thấy con đã sử dụng thành thạo nhóm lệnh Sự kiện (Lá cờ xanh) và Cảm biến (Hỏi/Trả lời). \n\n2. Nhận xét của giáo viên:\nThái độ của con rất tập trung và thông minh. Việc thiết lập đúng thứ tự các khối lệnh cho thấy tư duy tuần tự của con phát triển rất tốt.\n\n3. Định hướng tiếp theo:\nKhuyến nghị con theo học Khóa Lập trình Scratch 1.";
+            } else if (blockTitle.includes('Chữa Lỗi')) {
+                previewContent = "Chào Khôi, Thầy đã xem bài làm của con rồi. Hãy cùng thầy sửa lại một chút nhé!\n\n1. PHÂN TÍCH LỖI:\n- Lỗi thụt lề (Indentation): Dòng `hero.attack(enemy)` của con chưa được lùi vào trong lệnh `if enemy:`, nên chương trình không hiểu.\n\n2. CODE HOÀN CHỈNH:\n\`\`\`python\nwhile True:\n    enemy = hero.findNearestEnemy()\n    if enemy:\n        hero.attack(enemy) # Thầy đã thụt lề (Tab) dòng này giúp con nhé!\n\`\`\`\n\n3. BÀI HỌC CẦN NHỚ:\n- Trong Python, các lệnh nằm bên trong `while` hoặc `if` luôn phải lùi vào 1 khoảng (nhấn phím Tab) con nhé!";
+            } else if (blockTitle.includes('Gen UI Khối Lệnh')) {
+                previewContent = "\`\`\`jsx\n// Dưới đây là mô phỏng mã React JSX AI sẽ sinh ra:\nimport React from 'react';\n\nexport default function ScratchBlocks() {\n  return (\n    <div className=\"flex gap-4 overflow-x-auto p-6 bg-slate-100\">\n       {/* Cột 1: Chương trình chính */}\n       <div className=\"w-max flex flex-col items-start\">\n          <EventBlock text=\"Khi bấm vào 🏳️\" />\n          <VarBlock text=\"đặt [Điểm v] thành (0)\" />\n          <RepeatBlock count=\"10\">\n             <LooksBlock text=\"Nói (Xin chào!) trong (2) giây\" />\n          </RepeatBlock>\n       </div>\n    </div>\n  );\n}\n\`\`\`";
+            } else {
+                previewContent = "Đây là kết quả mô phỏng khi chạy prompt này trên ChatGPT hoặc Claude.";
+            }
+
+            textEl.textContent = previewContent;
+
+            // Hiển thị modal với animation
+            modal.classList.remove('hidden');
+            // Bắt buộc trình duyệt vẽ lại (reflow) để animation chạy mượt
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('preview-modal');
+            const content = document.getElementById('preview-modal-content');
+
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+
+            // Đợi animation fade out xong rồi mới ẩn
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Add tailwind animation config programmatically for the fade in effect
+        tailwind.config = {
+            theme: {
+                extend: {
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+
+        // Initialize state
+        document.getElementById('welcome-screen').classList.remove('hidden');
+        renderSidebar();
+    </script>
+</body>
+
+</html>
